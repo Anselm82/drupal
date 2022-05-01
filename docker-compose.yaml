@@ -1,0 +1,61 @@
+version: "3"
+
+services:
+  database:
+    image: mysql:8.0.29-oracle
+    container_name: database
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - internal
+  application:
+    image: drupal:php8.0-fpm-buster
+    container_name: application
+    depends_on:
+      - database
+    restart: unless-stopped
+    networks:
+      - internal
+      - external
+    volumes:
+      - drupal-data:/var/www/html
+  proxy:
+    image: nginx:1.21.6-alpine
+    container_name: proxy
+    depends_on:
+      - application
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    volumes:
+      - drupal-data:/var/www/html
+      - ./nginx-conf:/etc/nginx/conf.d
+    networks:
+      - external
+  backup:
+    image: ubuntu:jammy
+    tty: true
+    environment:
+      - OPERATION=restore
+      - VOLUME=drupal-data
+    volumes:
+      - ./backup.sh:/home/backup.sh
+      - ./backup:/backup
+      - db-data:/volume/db-data
+      - drupal-data:/volume/drupal-data
+    entrypoint: /bin/bash
+    command: -c 'apt update && apt install -y bzip2 && /home/backup.sh -o $${OPERATION} -v $${VOLUME}'
+networks:
+  external:
+    driver: bridge
+  internal:
+    driver: bridge
+volumes:
+  drupal-data:
+  db-data:
+
+
+
