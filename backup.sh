@@ -37,8 +37,12 @@ if [[ "$operation" = "backup" ]]; then
     fi
 elif [[ "$operation" = "restore" ]]; then
     if printf '%s\0' "${volumes[@]}" | grep -Fxqz "${volume}"; then
-        echo "$operation of $volume will start now..."
-        rm -rf /volume/${volume}/* /volume/${volume}/..?* /volume/${volume}/.[!.]* ; tar -C /volume/${volume} -xjf /backup/${volume}.tar.bz2
+        if [ -f "/backup/${volume}.tar.bz2" ]; then
+            echo "$operation of $volume will start now..."
+            rm -rf /volume/${volume}/* /volume/${volume}/..?* /volume/${volume}/.[!.]* ; tar -C /volume/${volume} -xjf /backup/${volume}.tar.bz2
+        else
+            echo "Nothing to restore. Skipping..."
+        fi
     else
         echo "Invalid parameter. Use 'db-data' or 'drupal-data' as volume."
     fi 

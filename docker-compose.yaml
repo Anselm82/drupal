@@ -37,9 +37,12 @@ services:
       - external
   backup:
     image: ubuntu:jammy
+    container_name: backup
+    depends_on:
+      - application
     tty: true
     environment:
-      - OPERATION=restore
+      - OPERATION=backup
       - VOLUME=drupal-data
     volumes:
       - ./backup.sh:/home/backup.sh
